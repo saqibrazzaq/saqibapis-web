@@ -41,4 +41,12 @@ export const PersonApi = {
 
     return response.data;
   },
+  delete: async function (id?: string) {
+    const response = await SaqibAPIsClient.request({
+      url: `/api/persons/${id}`,
+      method: "DELETE",
+    });
+
+    return response.data;
+  },
 };

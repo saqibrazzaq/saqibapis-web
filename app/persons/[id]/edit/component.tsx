@@ -30,6 +30,10 @@ import PersonEditReq, { PersonEditValidation } from "@/models/Person/PersonEditR
 import { DropdownApi } from "@/services/DropdownApi";
 import { CustomCombobox } from "@/components/CustomCombobox";
 import { DropdownRes } from "@/models/Dropdowns/DropdownDtos";
+import { toast } from "react-toastify";
+import BackButton from "@/components/BackButton";
+import { Button } from "@/components/ui/button";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmation";
 
 function PersonEditComponent() {
   const params = useParams();
@@ -57,13 +61,25 @@ function PersonEditComponent() {
   }
 
   function loadPerson() {
-    // console.log("Loading person...");
-    PersonApi.get(id)
-      .then((res) => {
-        setPerson(res);
-        // console.log("Got person");
-      })
-      .catch((error) => console.log(error));
+    if (id) {
+      PersonApi.get(id)
+        .then((res) => {
+          setPerson(res);
+          // console.log("Got person");
+        })
+        .catch((error) => console.log(error));
+    }
+  }
+
+  function deletePerson() {
+    if (id) {
+      PersonApi.delete(id)
+        .then((res) => {
+          toast.info("Person deleted successfully.", { closeOnClick: true });
+          router.back();
+        })
+        .catch((error) => console.log(error));
+    }
   }
 
   useEffect(() => {
@@ -85,25 +101,50 @@ function PersonEditComponent() {
 
   const onSubmit = async (values: z.infer<typeof PersonEditValidation>) => {
     setIsLoading(true);
-    console.log(values);
-    PersonApi.update(values)
-      .then((res) => {
-        // router.push(`/persons/${id}/edit`);
-        // router.push(`/persons/search`);
-        router.back();
-        console.log(res);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    // console.log(values);
+    if (id) {
+      PersonApi.update(values)
+        .then((res) => {
+          toast.success("Person updated successfully", { closeOnClick: true });
+          router.back();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      PersonApi.create(values)
+        .then((res) => {
+          toast.success("Person created successfully", { closeOnClick: true });
+          router.back();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
 
     setIsLoading(false);
   };
   return (
     <div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-6">
-          <PageHeading text="Edit Person" />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-6 mt-2">
+          <div className="flex flex-col justify-between gap-4 md:flex-row">
+            <div>
+              {id ? <PageHeading text="Edit Person" /> : <PageHeading text="Create Person" />}
+            </div>
+            <div className="flex items-center space-x-2">
+              <BackButton />
+              <SubmitButton isLoading={isLoading}>
+                {id ? "Update Person" : "Create Person"}
+              </SubmitButton>
+              {id && (
+                <DeleteConfirmationDialog
+                  deleteItemName={`Person ${person?.firstName} ${person?.lastName} (${person?.email})`}
+                  onDeleteClick={deletePerson}
+                />
+              )}
+            </div>
+          </div>
           <section className="space-y-4">
             {/* First Name and Last Name */}
             <div className="flex flex-col gap-4 md:flex-row">
@@ -227,7 +268,6 @@ function PersonEditComponent() {
               />
             </div>
           </section>
-          <SubmitButton isLoading={isLoading}>Update Person</SubmitButton>
         </form>
       </Form>
     </div>
