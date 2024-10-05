@@ -3,13 +3,28 @@ import { E164Number } from "libphonenumber-js/core";
 import Image from "next/image";
 import ReactDatePicker from "react-datepicker";
 import { Control } from "react-hook-form";
-import PhoneInput from "react-phone-number-input";
 
 import { Checkbox } from "./ui/checkbox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+import { PhoneInput } from "./ui/phone-input";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import React from "react";
+import { Button } from "./ui/button";
+import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
+import { DropdownRes } from "@/models/Dropdowns/DropdownDtos";
+import { cn } from "@/lib/utils";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 
 export enum FormFieldType {
   INPUT = "input",
@@ -19,6 +34,7 @@ export enum FormFieldType {
   DATE_PICKER = "datePicker",
   SELECT = "select",
   SKELETON = "skeleton",
+  DROPDOWN = "dropdown",
 }
 
 interface CustomProps {
@@ -34,13 +50,14 @@ interface CustomProps {
   children?: React.ReactNode;
   renderSkeleton?: (field: any) => React.ReactNode;
   fieldType: FormFieldType;
+  dropdownData?: DropdownRes[];
 }
 
 const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
   switch (props.fieldType) {
     case FormFieldType.INPUT:
       return (
-        <div className="flex rounded-md border border-dark-500 bg-dark-400">
+        <div className="">
           {props.iconSrc && (
             <Image
               src={props.iconSrc}
@@ -51,7 +68,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
             />
           )}
           <FormControl>
-            <Input placeholder={props.placeholder} {...field} className="shad-input border-0" />
+            <Input placeholder={props.placeholder} {...field} className="" />
           </FormControl>
         </div>
       );
@@ -73,10 +90,9 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
             defaultCountry="US"
             placeholder={props.placeholder}
             international
-            withCountryCallingCode
             value={field.value as E164Number | undefined}
             onChange={field.onChange}
-            className="input-phone"
+            className=""
           />
         </FormControl>
       );
@@ -93,7 +109,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
       );
     case FormFieldType.DATE_PICKER:
       return (
-        <div className="flex rounded-md border border-dark-500 bg-dark-400">
+        <div className="flex rounded-md border h-9 items-center">
           <Image
             src="/assets/icons/calendar.svg"
             height={24}
@@ -104,10 +120,16 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
           <FormControl>
             <ReactDatePicker
               showTimeSelect={props.showTimeSelect ?? false}
-              selected={field.value}
-              onChange={(date: Date | null) => field.onChange(date)}
+              showYearDropdown
+              showMonthDropdown
+              dropdownMode="select"
+              selected={field.value as Date}
+              onChange={(date: Date | null) => {
+                field.onChange(date);
+                console.log(date);
+              }}
               timeInputLabel="Time:"
-              dateFormat={props.dateFormat ?? "MM/dd/yyyy"}
+              dateFormat={props.dateFormat ?? "yyyy-MM-dd"}
               wrapperClassName="date-picker"
             />
           </FormControl>
@@ -116,15 +138,71 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
     case FormFieldType.SELECT:
       return (
         <FormControl>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
             <FormControl>
-              <SelectTrigger className="shad-select-trigger">
+              <SelectTrigger className="">
                 <SelectValue placeholder={props.placeholder} />
               </SelectTrigger>
             </FormControl>
-            <SelectContent className="shad-select-content">{props.children}</SelectContent>
+            <SelectContent className="">{props.children}</SelectContent>
           </Select>
         </FormControl>
+      );
+    case FormFieldType.DROPDOWN:
+      return (
+        // <FormControl>
+        //   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+        //     <FormControl>
+        //       <SelectTrigger className="">
+        //         <SelectValue placeholder={props.placeholder} />
+        //       </SelectTrigger>
+        //     </FormControl>
+        //     <SelectContent className="">{props.children}</SelectContent>
+        //   </Select>
+        // </FormControl>
+        <Popover>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button
+                variant="outline"
+                role="combobox"
+                className={cn("w-[200px] justify-between", !field.value && "text-muted-foreground")}
+              >
+                {field.value
+                  ? props.dropdownData?.find((ddItem) => ddItem.value === field.value)?.label
+                  : props.placeholder}
+                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search framework..." className="h-9" />
+              <CommandList>
+                <CommandEmpty>No framework found.</CommandEmpty>
+                <CommandGroup>
+                  {props.dropdownData?.map((ddItem) => (
+                    <CommandItem
+                      value={ddItem.label}
+                      key={ddItem.value}
+                      onSelect={() => {
+                        // form.setValue("language", ddItem.value)
+                      }}
+                    >
+                      {ddItem.label}
+                      <CheckIcon
+                        className={cn(
+                          "ml-auto h-4 w-4",
+                          ddItem.value === field.value ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       );
     case FormFieldType.SKELETON:
       return props.renderSkeleton ? props.renderSkeleton(field) : null;
@@ -142,12 +220,10 @@ const CustomFormField = (props: CustomProps) => {
       name={name}
       render={({ field }) => (
         <FormItem className="flex-1">
-          {props.fieldType !== FormFieldType.CHECKBOX && label && (
-            <FormLabel className="shad-input-label">{label}</FormLabel>
-          )}
+          {props.fieldType !== FormFieldType.CHECKBOX && label && <FormLabel>{label}</FormLabel>}
           <RenderInput field={field} props={props} />
 
-          <FormMessage className="shad-error" />
+          <FormMessage className="" />
         </FormItem>
       )}
     />

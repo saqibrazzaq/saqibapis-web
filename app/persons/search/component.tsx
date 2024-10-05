@@ -24,38 +24,69 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PageHeading from "@/components/PageHeading";
-import TableNavigationButton from "@/components/table/TableNavigationButton";
 import PersonSearchRes from "@/models/Person/PersonSearchRes";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ChevronFirst, ChevronLast } from "lucide-react";
 
 function PersonsSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<PersonSearchRes>>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: Common.DEFAULT_PAGE_SIZE,
+    pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+    pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
   });
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [globalFilter, setGlobalFilter] = React.useState(searchParams.get("searchText") ?? "");
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 500);
 
   function performSearch() {
+    const searchText = searchParams.get("searchText") ?? "";
     const searchReq = new PersonSearchReq(
-      { skip: pageIndex * pageSize, take: pageSize, searchText: debouncedGlobalFilter },
+      { skip: pageIndex * pageSize, take: pageSize, searchText: searchText },
       {}
     );
+    // console.log(`perform search - pageIndex=${pageIndex}, take=${pageSize}`);
     PersonApi.search(searchReq)
       .then((res) => setPagedRes(res))
       .catch((error) => errorHandler(error));
   }
 
+  function updateUrl(pageIndex: number, pageSize: number, searchText: string) {
+    router.push(
+      `/persons/search?searchText=${searchText}&pageIndex=${pageIndex}&pageSize=${pageSize}`
+    );
+  }
+
   useEffect(() => {
-    performSearch();
+    updateUrl(pageIndex, pageSize, debouncedGlobalFilter);
   }, [pageIndex, pageSize]);
 
   useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize: Common.DEFAULT_PAGE_SIZE });
-    performSearch();
+    if (pagedRes) {
+      // console.log("Resetting page");
+      setPagination({ pageIndex: 0, pageSize });
+      updateUrl(0, pageSize, debouncedGlobalFilter);
+    } else {
+      updateUrl(pageIndex, pageSize, debouncedGlobalFilter);
+    }
   }, [debouncedGlobalFilter]);
+
+  useEffect(() => {
+    performSearch();
+  }, [searchParams]);
 
   const table = useReactTable({
     data: pagedRes?.data ?? [],
@@ -79,13 +110,16 @@ function PersonsSearchComponent() {
   return (
     <div className="w-full">
       <PageHeading text="Persons" />
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Search..."
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
+        <Button className="">
+          <Link href={"/persons/create"}>Create Person</Link>
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -131,26 +165,50 @@ function PersonsSearchComponent() {
           Page {pageIndex + 1} of {Math.ceil((pagedRes?.totalRows ?? 1) / pageSize)}
         </div>
         <div className="space-x-2">
-          <TableNavigationButton
-            type="First"
-            click={() => table.firstPage()}
-            disabled={!table.getCanPreviousPage()}
-          />
-          <TableNavigationButton
-            type="Previous"
-            click={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          />
-          <TableNavigationButton
-            type="Next"
-            click={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          />
-          <TableNavigationButton
-            type="Last"
-            click={() => table.lastPage()}
-            disabled={!table.getCanNextPage()}
-          />
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationLink
+                  className={
+                    !table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined
+                  }
+                  aria-disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.firstPage()}
+                  href="#"
+                >
+                  <ChevronFirst size={"16px"} />
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationPrevious
+                  className={
+                    !table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined
+                  }
+                  aria-disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.previousPage()}
+                  href="#"
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                  aria-disabled={!table.getCanNextPage()}
+                  onClick={() => table.nextPage()}
+                  href="#"
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                  aria-disabled={!table.getCanNextPage()}
+                  onClick={() => table.lastPage()}
+                  href="#"
+                >
+                  <ChevronLast size={"16px"} />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>

@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { parseDate } from "react-datepicker/dist/date_utils";
+import { format } from "date-fns";
 
 const columns: ColumnDef<PersonSearchRes>[] = [
   {
@@ -44,7 +46,19 @@ const columns: ColumnDef<PersonSearchRes>[] = [
     header: "Gender",
   },
   {
+    accessorKey: "dateOfBirth",
+    header: () => <div className="">Date of Birth</div>,
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("dateOfBirth"));
+      const formatted = format(date, "yyyy-MM-dd");
+
+      return <div className="">{formatted}</div>;
+    },
+  },
+  {
     accessorKey: "city",
+    accessorFn: (row) =>
+      row.city + ", " + (row.state?.name ?? "") + ", " + (row.state?.country?.name ?? ""),
     header: "City",
   },
   {
@@ -62,7 +76,9 @@ const columns: ColumnDef<PersonSearchRes>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Edit Person</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/persons/${person.id}/edit`}>Edit Person</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

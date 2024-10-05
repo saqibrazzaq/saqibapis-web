@@ -11,7 +11,7 @@ export const errorHandler = (error: AxiosError) => {
   try {
     var errorDetail = error.response?.data as ErrorDetail;
     toast.error(errorDetail.Message, {
-      autoClose: false,
+      // autoClose: false,
       closeOnClick: true,
     });
   } catch (error: any) {
