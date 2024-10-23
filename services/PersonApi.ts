@@ -17,7 +17,7 @@ export const PersonApi = {
   },
   create: async function (data: PersonCreateReq) {
     const response = await SaqibAPIsClient.request({
-      url: "/api/persons",
+      url: "/api/persons/create",
       method: "POST",
       data: data,
     });
@@ -26,7 +26,7 @@ export const PersonApi = {
   },
   update: async function (data: PersonEditReq) {
     const response = await SaqibAPIsClient.request({
-      url: "/api/persons",
+      url: "/api/persons/update",
       method: "PUT",
       data: data,
     });
@@ -35,7 +35,7 @@ export const PersonApi = {
   },
   get: async function (id?: string): Promise<PersonRes> {
     const response = await SaqibAPIsClient.request({
-      url: `/api/persons/${id}`,
+      url: `/api/persons/getbyid/${id}`,
       method: "GET",
     });
 
@@ -43,7 +43,7 @@ export const PersonApi = {
   },
   delete: async function (id?: string) {
     const response = await SaqibAPIsClient.request({
-      url: `/api/persons/${id}`,
+      url: `/api/persons/delete/${id}`,
       method: "DELETE",
     });
 

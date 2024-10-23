@@ -24,9 +24,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PageHeading from "@/components/PageHeading";
-import TableNavigationButton from "@/components/table/TableNavigationButton";
 import StateSearchRes from "./StateSearchRes";
 import { useSearchParams } from "next/navigation";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ChevronFirst, ChevronLast } from "lucide-react";
 
 function StateSearchComponent() {
   const searchParams = useSearchParams();
@@ -42,7 +50,7 @@ function StateSearchComponent() {
 
   function performSearch() {
     const searchReq = new StateSearchReq(
-      { skip: pageIndex * pageSize, take: pageSize, searchText: debouncedGlobalFilter },
+      { pageIndex: pageIndex * pageSize, pageSize: pageSize, searchText: debouncedGlobalFilter },
       { countryId: searchParams.get("countryId") ?? "" }
     );
     StateApi.search(searchReq)
@@ -133,26 +141,50 @@ function StateSearchComponent() {
           Page {pageIndex + 1} of {Math.ceil((pagedRes?.totalRows ?? 1) / pageSize)}
         </div>
         <div className="space-x-2">
-          <TableNavigationButton
-            type="First"
-            click={() => table.firstPage()}
-            disabled={!table.getCanPreviousPage()}
-          />
-          <TableNavigationButton
-            type="Previous"
-            click={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          />
-          <TableNavigationButton
-            type="Next"
-            click={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          />
-          <TableNavigationButton
-            type="Last"
-            click={() => table.lastPage()}
-            disabled={!table.getCanNextPage()}
-          />
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationLink
+                  className={
+                    !table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined
+                  }
+                  aria-disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.firstPage()}
+                  href="#"
+                >
+                  <ChevronFirst size={"16px"} />
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationPrevious
+                  className={
+                    !table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined
+                  }
+                  aria-disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.previousPage()}
+                  href="#"
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                  aria-disabled={!table.getCanNextPage()}
+                  onClick={() => table.nextPage()}
+                  href="#"
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                  aria-disabled={!table.getCanNextPage()}
+                  onClick={() => table.lastPage()}
+                  href="#"
+                >
+                  <ChevronLast size={"16px"} />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>

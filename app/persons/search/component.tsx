@@ -27,7 +27,7 @@ import PageHeading from "@/components/PageHeading";
 import PersonSearchRes from "@/models/Person/PersonSearchRes";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Pagination,
   PaginationContent,
@@ -38,49 +38,78 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ChevronFirst, ChevronLast } from "lucide-react";
+import { CustomCombobox } from "@/components/CustomCombobox";
+import { DropdownRes } from "@/models/Dropdowns/DropdownDtos";
+import { DropdownApi } from "@/services/DropdownApi";
+import { useDebouncedCallback } from "use-debounce";
+import { CountrySearchReq } from "@/app/countries/search/CountrySearchReq";
 
 function PersonsSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<PersonSearchRes>>();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
     pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
     pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
   });
-  const [globalFilter, setGlobalFilter] = React.useState(searchParams.get("searchText") ?? "");
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [states, setStates] = useState<DropdownRes[]>([]);
+  const handleStateSearchChanged = async (value: string) => {
+    DropdownApi.getStates({ searchText: value })
+      .then((res) => setStates(res))
+      .catch((error) => console.log(error));
+  };
+  const [globalFilter, setGlobalFilter] = React.useState(searchParams.get("searchText") ?? "");
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 500);
 
+  const [searchReq, setSearchReq] = useState<CountrySearchReq>(
+    new CountrySearchReq(
+      {
+        pageIndex: pageIndex,
+        pageSize: pageSize,
+        searchText: debouncedGlobalFilter,
+      },
+      {}
+    )
+  );
+
   function performSearch() {
-    const searchText = searchParams.get("searchText") ?? "";
-    const searchReq = new PersonSearchReq(
-      { skip: pageIndex * pageSize, take: pageSize, searchText: searchText },
+    const searchReqFromParams = new CountrySearchReq(
+      {
+        pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+        pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
+        searchText: searchParams.get("searchText") ?? "",
+      },
       {}
     );
-    // console.log(`perform search - pageIndex=${pageIndex}, take=${pageSize}`);
-    PersonApi.search(searchReq)
+    PersonApi.search(searchReqFromParams)
       .then((res) => setPagedRes(res))
       .catch((error) => errorHandler(error));
   }
 
-  function updateUrl(pageIndex: number, pageSize: number, searchText: string) {
+  function updateUrl(req: CountrySearchReq) {
     router.push(
-      `/persons/search?searchText=${searchText}&pageIndex=${pageIndex}&pageSize=${pageSize}`
+      `/persons/search?searchText=${req.searchText}&pageIndex=${req.pageIndex}&pageSize=${req.pageSize}`
     );
   }
 
   useEffect(() => {
-    updateUrl(pageIndex, pageSize, debouncedGlobalFilter);
+    updateUrl({
+      ...searchReq,
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      searchText: debouncedGlobalFilter,
+    });
   }, [pageIndex, pageSize]);
 
   useEffect(() => {
     if (pagedRes) {
-      // console.log("Resetting page");
       setPagination({ pageIndex: 0, pageSize });
-      updateUrl(0, pageSize, debouncedGlobalFilter);
+      updateUrl({ ...searchReq, pageIndex: 0, searchText: debouncedGlobalFilter });
     } else {
-      updateUrl(pageIndex, pageSize, debouncedGlobalFilter);
+      updateUrl({ ...searchReq, searchText: debouncedGlobalFilter });
     }
   }, [debouncedGlobalFilter]);
 
@@ -116,6 +145,17 @@ function PersonsSearchComponent() {
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
+        />
+        <CustomCombobox
+          className="w-full"
+          items={states}
+          onSelect={(value) => {
+            //form.setValue("stateId", value);
+            console.log("selected state: " + value);
+          }}
+          onSearchChange={handleStateSearchChanged}
+          value={""}
+          searchPlaceholder="Search state..."
         />
         <Button className="">
           <Link href={"/persons/create"}>Create Person</Link>

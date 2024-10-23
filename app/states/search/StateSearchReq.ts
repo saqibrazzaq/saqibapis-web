@@ -5,12 +5,17 @@ export class StateSearchReq extends PagedReq {
   countryId?: string;
   // userId?: string;
   constructor(
-    { skip = 0, take = Common.DEFAULT_PAGE_SIZE, orderBy = "", searchText = "" }: PagedReq,
+    {
+      pageIndex: skip = 0,
+      pageSize: take = Common.DEFAULT_PAGE_SIZE,
+      orderBy = "",
+      searchText = "",
+    }: PagedReq,
     { countryId = "" }
   ) {
     super({
-      skip,
-      take,
+      pageIndex: skip,
+      pageSize: take,
       orderBy: orderBy,
       searchText: searchText,
     });
