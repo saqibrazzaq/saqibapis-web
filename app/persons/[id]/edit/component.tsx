@@ -29,7 +29,7 @@ import PersonRes from "@/models/Person/PersonRes";
 import PersonEditReq, { PersonEditValidation } from "@/models/Person/PersonEditReq";
 import { DropdownApi } from "@/services/DropdownApi";
 import { CustomCombobox } from "@/components/CustomCombobox";
-import { DropdownRes } from "@/models/Dropdowns/DropdownDtos";
+import { DropdownReq, DropdownRes } from "@/models/Dropdowns/DropdownDtos";
 import { toast } from "react-toastify";
 import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
@@ -44,15 +44,15 @@ function PersonEditComponent() {
   const [states, setStates] = useState<DropdownRes[]>([]);
   const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
 
-  const handleCitySearchChanged = async (value: string) => {
+  const handleStateSearchChanged = async (value: string) => {
     DropdownApi.getStates({ searchText: value })
       .then((res) => setStates(res))
       .catch((error) => console.log(error));
   };
 
-  function searchStatesDropdown() {
+  function searchStatesDropdown(stateId?: string) {
     // console.log("loading states...");
-    DropdownApi.getStates()
+    DropdownApi.getStates(new DropdownReq("", stateId))
       .then((res) => {
         setStates(res);
         // console.log("Got states");
@@ -65,6 +65,7 @@ function PersonEditComponent() {
       PersonApi.get(id)
         .then((res) => {
           setPerson(res);
+          searchStatesDropdown(res.stateId);
           // console.log("Got person");
         })
         .catch((error) => console.log(error));
@@ -82,14 +83,19 @@ function PersonEditComponent() {
     }
   }
 
-  useEffect(() => {
-    searchStatesDropdown();
-    setDropdownsLoaded(true);
-  }, [id]);
+  // useEffect(() => {
+  //   searchStatesDropdown();
+  //   setDropdownsLoaded(true);
+  // }, [id]);
+
+  // useEffect(() => {
+  //   loadPerson();
+  // }, [dropdownsLoaded == true]);
 
   useEffect(() => {
     loadPerson();
-  }, [dropdownsLoaded == true]);
+    searchStatesDropdown();
+  }, [id]);
 
   const form = useForm<z.infer<typeof PersonEditValidation>>({
     resolver: zodResolver(PersonEditValidation),
@@ -248,9 +254,10 @@ function PersonEditComponent() {
                         form.setValue("stateId", value);
                         // console.log("selected value: " + value);
                       }}
-                      onSearchChange={handleCitySearchChanged}
+                      onSearchChange={handleStateSearchChanged}
                       value={field.value}
                       searchPlaceholder="Search state..."
+                      unselect={true}
                     />
 
                     <FormMessage />

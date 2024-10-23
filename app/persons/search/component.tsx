@@ -39,10 +39,8 @@ import {
 } from "@/components/ui/pagination";
 import { ChevronFirst, ChevronLast } from "lucide-react";
 import { CustomCombobox } from "@/components/CustomCombobox";
-import { DropdownRes } from "@/models/Dropdowns/DropdownDtos";
+import { DropdownReq, DropdownRes } from "@/models/Dropdowns/DropdownDtos";
 import { DropdownApi } from "@/services/DropdownApi";
-import { useDebouncedCallback } from "use-debounce";
-import { CountrySearchReq } from "@/app/countries/search/CountrySearchReq";
 
 function PersonsSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<PersonSearchRes>>();
@@ -64,34 +62,40 @@ function PersonsSearchComponent() {
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 500);
 
-  const [searchReq, setSearchReq] = useState<CountrySearchReq>(
-    new CountrySearchReq(
+  const [searchReq, setSearchReq] = useState<PersonSearchReq>(
+    new PersonSearchReq(
       {
         pageIndex: pageIndex,
         pageSize: pageSize,
         searchText: debouncedGlobalFilter,
       },
-      {}
+      {
+        countryId: searchParams.get("countryId") ?? "",
+        stateId: searchParams.get("stateId") ?? "",
+      }
     )
   );
 
   function performSearch() {
-    const searchReqFromParams = new CountrySearchReq(
+    const searchReqFromParams = new PersonSearchReq(
       {
         pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
         pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
         searchText: searchParams.get("searchText") ?? "",
       },
-      {}
+      {
+        countryId: searchParams.get("countryId") ?? "",
+        stateId: searchParams.get("stateId") ?? "",
+      }
     );
     PersonApi.search(searchReqFromParams)
       .then((res) => setPagedRes(res))
       .catch((error) => errorHandler(error));
   }
 
-  function updateUrl(req: CountrySearchReq) {
+  function updateUrl(req: PersonSearchReq) {
     router.push(
-      `/persons/search?searchText=${req.searchText}&pageIndex=${req.pageIndex}&pageSize=${req.pageSize}`
+      `/persons/search?searchText=${req.searchText}&countryId=${req.countryId}&stateId=${req.stateId}&pageIndex=${req.pageIndex}&pageSize=${req.pageSize}`
     );
   }
 
@@ -116,6 +120,16 @@ function PersonsSearchComponent() {
   useEffect(() => {
     performSearch();
   }, [searchParams]);
+
+  function loadStates() {
+    DropdownApi.getStates(new DropdownReq("", searchReq.stateId))
+      .then((res) => setStates(res))
+      .catch((error) => console.log(error));
+  }
+
+  useEffect(() => {
+    loadStates();
+  }, []);
 
   const table = useReactTable({
     data: pagedRes?.data ?? [],
@@ -151,11 +165,15 @@ function PersonsSearchComponent() {
           items={states}
           onSelect={(value) => {
             //form.setValue("stateId", value);
+            setSearchReq({ ...searchReq, stateId: value });
+            updateUrl({ ...searchReq, stateId: value });
             console.log("selected state: " + value);
           }}
           onSearchChange={handleStateSearchChanged}
-          value={""}
+          value={searchReq.stateId}
           searchPlaceholder="Search state..."
+          selectItemMsg="Select a state"
+          unselect={true}
         />
         <Button className="">
           <Link href={"/persons/create"}>Create Person</Link>
