@@ -154,27 +154,29 @@ function PersonsSearchComponent() {
     <div className="w-full">
       <PageHeading text="Persons" />
       <div className="flex items-center justify-between py-4">
-        <Input
-          placeholder="Search..."
-          value={globalFilter ?? ""}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
-        <CustomCombobox
-          className="w-full"
-          items={states}
-          onSelect={(value) => {
-            //form.setValue("stateId", value);
-            setSearchReq({ ...searchReq, stateId: value });
-            updateUrl({ ...searchReq, stateId: value });
-            console.log("selected state: " + value);
-          }}
-          onSearchChange={handleStateSearchChanged}
-          value={searchReq.stateId}
-          searchPlaceholder="Search state..."
-          selectItemMsg="Select a state"
-          unselect={true}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="w-64"
+          />
+          <CustomCombobox
+            className="w-64"
+            items={states}
+            onSelect={(value) => {
+              //form.setValue("stateId", value);
+              setSearchReq({ ...searchReq, stateId: value });
+              updateUrl({ ...searchReq, stateId: value });
+              // console.log("selected state: " + value);
+            }}
+            onSearchChange={handleStateSearchChanged}
+            value={searchReq.stateId}
+            searchPlaceholder="Search state..."
+            selectItemMsg="Select country/state"
+            unselect={true}
+          />
+        </div>
         <Button className="">
           <Link href={"/persons/create"}>Create Person</Link>
         </Button>

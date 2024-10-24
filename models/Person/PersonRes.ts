@@ -1,3 +1,5 @@
+import { StateRes } from "../State/StateRes";
+
 export default interface PersonRes {
   id: number;
   firstName: string;

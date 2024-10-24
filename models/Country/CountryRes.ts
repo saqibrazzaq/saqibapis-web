@@ -1,5 +1,5 @@
 export default interface CountryRes {
   id: number;
-  name?: string;
+  name: string;
   code?: string;
 }

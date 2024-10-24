@@ -45,7 +45,9 @@ const columns: ColumnDef<CountrySearchRes>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Edit Country</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/countries/${country.id}/edit`}>Edit Country</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href={`/states/search?countryId=${country.id}`}>View States</Link>
             </DropdownMenuItem>

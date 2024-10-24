@@ -33,6 +33,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ChevronFirst, ChevronLast } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function CountriesSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<CountrySearchRes>>();
@@ -87,13 +89,16 @@ function CountriesSearchComponent() {
   return (
     <div className="w-full">
       <PageHeading text="Countries" />
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Search..."
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
+          className="w-64"
         />
+        <Button className="">
+          <Link href={"/countries/create"}>Create Country</Link>
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>

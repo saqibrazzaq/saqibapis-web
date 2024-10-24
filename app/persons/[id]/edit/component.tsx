@@ -42,7 +42,6 @@ function PersonEditComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [person, setPerson] = useState<PersonRes>();
   const [states, setStates] = useState<DropdownRes[]>([]);
-  const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
 
   const handleStateSearchChanged = async (value: string) => {
     DropdownApi.getStates({ searchText: value })
@@ -79,18 +78,11 @@ function PersonEditComponent() {
           toast.info("Person deleted successfully.", { closeOnClick: true });
           router.back();
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          console.log(error);
+        });
     }
   }
-
-  // useEffect(() => {
-  //   searchStatesDropdown();
-  //   setDropdownsLoaded(true);
-  // }, [id]);
-
-  // useEffect(() => {
-  //   loadPerson();
-  // }, [dropdownsLoaded == true]);
 
   useEffect(() => {
     loadPerson();
