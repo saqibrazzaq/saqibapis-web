@@ -1,14 +1,14 @@
 import { Metadata } from "next";
-import React from "react";
+import React, { Suspense } from "react";
 import PersonsSearchComponent from "./component";
 
 export const metadata: Metadata = { title: "Persons" };
 
 const PersonsSearchPage = () => {
   return (
-    <div>
+    <Suspense>
       <PersonsSearchComponent />
-    </div>
+    </Suspense>
   );
 };
 
