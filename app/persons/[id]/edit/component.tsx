@@ -65,7 +65,6 @@ function PersonEditComponent() {
         .then((res) => {
           setPerson(res);
           searchStatesDropdown(res.stateId);
-          // console.log("Got person");
         })
         .catch((error) => console.log(error));
     }

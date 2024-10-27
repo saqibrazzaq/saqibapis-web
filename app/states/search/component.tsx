@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import PageHeading from "@/components/PageHeading";
 import StateSearchRes from "./StateSearchRes";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Pagination,
   PaginationContent,
@@ -35,37 +35,89 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ChevronFirst, ChevronLast } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import CountryRes from "@/models/Country/CountryRes";
+import { CountryApi } from "@/services/CountryApi";
 
 function StateSearchComponent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [pagedRes, setPagedRes] = useState<PagedResponse<StateSearchRes>>();
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: Common.DEFAULT_PAGE_SIZE,
+    pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+    pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
   });
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 500);
 
-  function performSearch() {
-    const searchReq = new StateSearchReq(
-      { pageIndex: pageIndex * pageSize, pageSize: pageSize, searchText: debouncedGlobalFilter },
+  const [country, setCountry] = useState<CountryRes>();
+
+  const [searchReq, setSearchReq] = useState<StateSearchReq>(
+    new StateSearchReq(
+      {
+        pageIndex: pageIndex,
+        pageSize: pageSize,
+        searchText: debouncedGlobalFilter,
+      },
       { countryId: searchParams.get("countryId") ?? "" }
+    )
+  );
+
+  function performSearch() {
+    const searchReqFromParams = new StateSearchReq(
+      {
+        pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+        pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
+        searchText: searchParams.get("searchText") ?? "",
+      },
+      {
+        countryId: searchParams.get("countryId") ?? "",
+      }
     );
-    StateApi.search(searchReq)
+    StateApi.search(searchReqFromParams)
       .then((res) => setPagedRes(res))
       .catch((error) => errorHandler(error));
   }
 
+  function updateUrl(req: StateSearchReq) {
+    router.push(
+      `/states/search?countryId=${req.countryId}&searchText=${req.searchText}&pageIndex=${req.pageIndex}&pageSize=${req.pageSize}`
+    );
+  }
+
   useEffect(() => {
-    performSearch();
+    updateUrl({
+      ...searchReq,
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      searchText: debouncedGlobalFilter,
+    });
   }, [pageIndex, pageSize]);
 
   useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize: Common.DEFAULT_PAGE_SIZE });
-    performSearch();
+    if (pagedRes) {
+      setPagination({ pageIndex: 0, pageSize });
+      updateUrl({ ...searchReq, pageIndex: 0, searchText: debouncedGlobalFilter });
+    } else {
+      updateUrl({ ...searchReq, searchText: debouncedGlobalFilter });
+    }
   }, [debouncedGlobalFilter]);
+
+  function loadCountry() {
+    if (searchReq.countryId) {
+      CountryApi.get(searchReq.countryId)
+        .then((res) => setCountry(res))
+        .catch((error) => errorHandler(error));
+    }
+  }
+
+  useEffect(() => {
+    performSearch();
+    loadCountry();
+  }, [searchParams]);
 
   const table = useReactTable({
     data: pagedRes?.data ?? [],
@@ -88,14 +140,17 @@ function StateSearchComponent() {
 
   return (
     <div className="w-full">
-      <PageHeading text="States" />
-      <div className="flex items-center py-4">
+      <PageHeading text={`States - ${country?.name}`} />
+      <div className="flex justify-between items-center py-4">
         <Input
           placeholder="Search..."
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
+        <Button className="">
+          <Link href={`/states/create?countryId=${searchReq.countryId}`}>Create State</Link>
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>

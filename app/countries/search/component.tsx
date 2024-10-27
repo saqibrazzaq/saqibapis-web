@@ -35,37 +35,74 @@ import {
 import { ChevronFirst, ChevronLast } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function CountriesSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<CountrySearchRes>>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: Common.DEFAULT_PAGE_SIZE,
+    pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+    pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
   });
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 500);
 
+  const [searchReq, setSearchReq] = useState<CountrySearchReq>(
+    new CountrySearchReq(
+      {
+        pageIndex: pageIndex,
+        pageSize: pageSize,
+        searchText: debouncedGlobalFilter,
+      },
+      {}
+    )
+  );
+
   function performSearch() {
-    const searchReq = new CountrySearchReq(
-      { pageIndex: pageIndex * pageSize, pageSize: pageSize, searchText: debouncedGlobalFilter },
+    const searchReqFromParams = new CountrySearchReq(
+      {
+        pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),
+        pageSize: parseInt(searchParams.get("pageSize") ?? Common.DEFAULT_PAGE_SIZE.toString()),
+        searchText: searchParams.get("searchText") ?? "",
+      },
       {}
     );
 
-    CountryApi.search(searchReq)
+    CountryApi.search(searchReqFromParams)
       .then((res) => setPagedRes(res))
       .catch((error) => errorHandler(error));
   }
 
+  function updateUrl(req: CountrySearchReq) {
+    router.push(
+      `/countries/search?searchText=${req.searchText}&pageIndex=${req.pageIndex}&pageSize=${req.pageSize}`
+    );
+  }
+
   useEffect(() => {
-    performSearch();
+    updateUrl({
+      ...searchReq,
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      searchText: debouncedGlobalFilter,
+    });
   }, [pageIndex, pageSize]);
 
   useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize: Common.DEFAULT_PAGE_SIZE });
-    performSearch();
+    if (pagedRes) {
+      setPagination({ pageIndex: 0, pageSize });
+      updateUrl({ ...searchReq, pageIndex: 0, searchText: debouncedGlobalFilter });
+    } else {
+      updateUrl({ ...searchReq, searchText: debouncedGlobalFilter });
+    }
   }, [debouncedGlobalFilter]);
+
+  useEffect(() => {
+    performSearch();
+  }, [searchParams]);
 
   const table = useReactTable({
     data: pagedRes?.data ?? [],

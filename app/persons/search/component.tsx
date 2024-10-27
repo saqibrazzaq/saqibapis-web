@@ -45,7 +45,6 @@ import { DropdownApi } from "@/services/DropdownApi";
 function PersonsSearchComponent() {
   const [pagedRes, setPagedRes] = useState<PagedResponse<PersonSearchRes>>();
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
     pageIndex: parseInt(searchParams.get("pageIndex") ?? "0"),

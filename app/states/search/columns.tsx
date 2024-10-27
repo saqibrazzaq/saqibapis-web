@@ -42,7 +42,9 @@ const columns: ColumnDef<StateSearchRes>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Edit State</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/states/${state.id}/edit`}>Edit State</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

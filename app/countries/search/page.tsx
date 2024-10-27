@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import CountriesSearchComponent from "./component";
 import { Metadata } from "next";
 
@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Countries" };
 
 const CountriesSearchPage = () => {
   return (
-    <div>
+    <Suspense>
       <CountriesSearchComponent />
-    </div>
+    </Suspense>
   );
 };
 

@@ -11,4 +11,13 @@ export const DropdownApi = {
 
     return response.data;
   },
+  getCountries: async function getCountries(searchParams?: DropdownReq) {
+    const response = await SaqibAPIsClient.request({
+      url: "/api/dropdowns/country",
+      method: "GET",
+      params: searchParams,
+    });
+
+    return response.data;
+  },
 };
