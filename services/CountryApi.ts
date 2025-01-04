@@ -2,9 +2,12 @@ import { CountrySearchReq } from "@/app/countries/search/CountrySearchReq";
 import { SaqibAPIsClient } from "@/axios/SaqibAPIsClient";
 import CountryEditReq from "@/models/Country/CountryEditReq";
 import CountryRes from "@/models/Country/CountryRes";
+import { PagedResponse } from "@/models/PagedResponse";
 
 export const CountryApi = {
-  search: async function search(searchParams?: CountrySearchReq) {
+  search: async function search(
+    searchParams?: CountrySearchReq
+  ): Promise<PagedResponse<CountrySearchRes>> {
     const response = await SaqibAPIsClient.request({
       url: "/api/countries/search",
       method: "GET",
